@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Match-3 Fruit Grid with Gravity</title>
+  <title>Match-3 Smooth Gravity</title>
   <style>
     body {
       display: grid;
@@ -14,6 +14,7 @@
       font-family: monospace;
       padding: 10px;
       background: #f0f0f0;
+      position: relative;
     }
 
     .cell {
@@ -25,7 +26,8 @@
       user-select: none;
       background: #fff;
       border-radius: 6px;
-      transition: transform 0.1s;
+      position: relative;
+      transition: top 0.3s ease;
     }
 
     .cell:hover {
@@ -47,26 +49,26 @@
         span.className = 'cell';
         span.dataset.x = x;
         span.dataset.y = y;
-        span.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+        span.dataset.fruit = fruits[Math.floor(Math.random() * fruits.length)];
+        span.textContent = span.dataset.fruit;
         document.body.appendChild(span);
         cells.push(span);
       }
     }
 
-    // Helper to get cell at coordinates
     function getCell(x, y) {
       if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return null;
       return cells[y * gridWidth + x];
     }
 
-    // Recursive delete function
     function deleteConnected(x, y, fruit, visited = new Set()) {
       const key = `${x},${y}`;
       if (visited.has(key)) return;
       const cell = getCell(x, y);
-      if (!cell || cell.textContent !== fruit) return;
+      if (!cell || cell.dataset.fruit !== fruit) return;
 
-      cell.textContent = ''; // delete fruit
+      cell.dataset.fruit = '';
+      cell.textContent = '';
       visited.add(key);
 
       deleteConnected(x+1, y, fruit, visited);
@@ -75,24 +77,27 @@
       deleteConnected(x, y-1, fruit, visited);
     }
 
-    // Apply gravity: fruits fall down to fill empty cells
     function applyGravity() {
       for (let x = 0; x < gridWidth; x++) {
         let emptySlots = 0;
         for (let y = gridHeight - 1; y >= 0; y--) {
           const cell = getCell(x, y);
-          if (!cell.textContent) {
+          if (!cell.dataset.fruit) {
             emptySlots++;
           } else if (emptySlots > 0) {
             const targetCell = getCell(x, y + emptySlots);
-            targetCell.textContent = cell.textContent;
+            targetCell.dataset.fruit = cell.dataset.fruit;
+            targetCell.textContent = cell.dataset.fruit;
+            cell.dataset.fruit = '';
             cell.textContent = '';
           }
         }
-        // Fill top empty cells with new random fruits
+        // Fill top empty cells
         for (let y = 0; y < emptySlots; y++) {
           const cell = getCell(x, y);
-          cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+          const newFruit = fruits[Math.floor(Math.random() * fruits.length)];
+          cell.dataset.fruit = newFruit;
+          cell.textContent = newFruit;
         }
       }
     }
@@ -102,7 +107,7 @@
       cell.addEventListener('click', () => {
         const x = parseInt(cell.dataset.x);
         const y = parseInt(cell.dataset.y);
-        const fruit = cell.textContent;
+        const fruit = cell.dataset.fruit;
         if (fruit) {
           deleteConnected(x, y, fruit);
           applyGravity();
