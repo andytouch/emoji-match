@@ -7,21 +7,29 @@
   <style>
     body {
       display: grid;
-      grid-template-columns: repeat(100, 20px); /* 100 columns, each 20px wide */
-      grid-auto-rows: 20px; /* each row 20px tall */
-      gap: 0; /* no gap for perfect grid */
+      grid-template-columns: repeat(100, 40px); /* wider cells */
+      grid-auto-rows: 40px; /* taller cells */
+      gap: 2px; /* small gap between emojis */
       justify-content: center;
-      font-size: 16px;
-      line-height: 1;
       font-family: monospace;
+      padding: 10px;
+      background: #f0f0f0;
     }
 
     .cell {
       display: flex;
       justify-content: center;
       align-items: center;
+      font-size: 32px; /* bigger emoji */
       cursor: pointer;
       user-select: none;
+      background: #fff;
+      border-radius: 4px;
+    }
+
+    .cell:hover {
+      transform: scale(1.1);
+      transition: transform 0.1s;
     }
   </style>
 </head>
