@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fruit Bomb Grid</title>
+  <title>Match-3 Fruit Grid with Gravity</title>
   <style>
     body {
       display: grid;
-      grid-template-columns: repeat(100, 40px); /* wider cells */
-      grid-auto-rows: 40px; /* taller cells */
-      gap: 2px; /* small gap between emojis */
+      grid-template-columns: repeat(20, 50px);
+      grid-auto-rows: 50px;
+      gap: 2px;
       justify-content: center;
       font-family: monospace;
       padding: 10px;
@@ -20,33 +20,95 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 32px; /* bigger emoji */
+      font-size: 36px;
       cursor: pointer;
       user-select: none;
       background: #fff;
-      border-radius: 4px;
+      border-radius: 6px;
+      transition: transform 0.1s;
     }
 
     .cell:hover {
       transform: scale(1.1);
-      transition: transform 0.1s;
     }
   </style>
 </head>
 <body>
   <script>
     const fruits = ['🍎','🍌','🍇','🍉','🍓','🍒','🍑','🥭','🍍','🥝'];
-    const gridSize = 100;
+    const gridWidth = 20;
+    const gridHeight = 20;
+    const cells = [];
 
-    for (let i = 0; i < gridSize * gridSize; i++) {
-      const span = document.createElement('span');
-      span.className = 'cell';
-      span.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-      span.addEventListener('click', () => {
-        span.textContent = '💣';
-      });
-      document.body.appendChild(span);
+    // Create grid
+    for (let y = 0; y < gridHeight; y++) {
+      for (let x = 0; x < gridWidth; x++) {
+        const span = document.createElement('span');
+        span.className = 'cell';
+        span.dataset.x = x;
+        span.dataset.y = y;
+        span.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+        document.body.appendChild(span);
+        cells.push(span);
+      }
     }
+
+    // Helper to get cell at coordinates
+    function getCell(x, y) {
+      if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return null;
+      return cells[y * gridWidth + x];
+    }
+
+    // Recursive delete function
+    function deleteConnected(x, y, fruit, visited = new Set()) {
+      const key = `${x},${y}`;
+      if (visited.has(key)) return;
+      const cell = getCell(x, y);
+      if (!cell || cell.textContent !== fruit) return;
+
+      cell.textContent = ''; // delete fruit
+      visited.add(key);
+
+      deleteConnected(x+1, y, fruit, visited);
+      deleteConnected(x-1, y, fruit, visited);
+      deleteConnected(x, y+1, fruit, visited);
+      deleteConnected(x, y-1, fruit, visited);
+    }
+
+    // Apply gravity: fruits fall down to fill empty cells
+    function applyGravity() {
+      for (let x = 0; x < gridWidth; x++) {
+        let emptySlots = 0;
+        for (let y = gridHeight - 1; y >= 0; y--) {
+          const cell = getCell(x, y);
+          if (!cell.textContent) {
+            emptySlots++;
+          } else if (emptySlots > 0) {
+            const targetCell = getCell(x, y + emptySlots);
+            targetCell.textContent = cell.textContent;
+            cell.textContent = '';
+          }
+        }
+        // Fill top empty cells with new random fruits
+        for (let y = 0; y < emptySlots; y++) {
+          const cell = getCell(x, y);
+          cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+        }
+      }
+    }
+
+    // Click handler
+    cells.forEach(cell => {
+      cell.addEventListener('click', () => {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        const fruit = cell.textContent;
+        if (fruit) {
+          deleteConnected(x, y, fruit);
+          applyGravity();
+        }
+      });
+    });
   </script>
 </body>
 </html>
