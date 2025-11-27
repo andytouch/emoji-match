@@ -70,7 +70,7 @@ function createCell(x, y, fruit) {
     const f = span.dataset.fruit;
     if (!f) return;
 
-    const group = getConnectedGroup(x, y, f);
+    const group = getConnectedGroup(parseInt(span.dataset.x), parseInt(span.dataset.y), f);
     if (group.size >= 3) {
       // Delete the group visually
       for (let key of group) {
@@ -80,7 +80,9 @@ function createCell(x, y, fruit) {
         c.textContent = '';
       }
       // Delay before gravity
-      setTimeout(applyGravity, 300);
+      setTimeout(() => {
+        applyGravity();
+      }, 300); // 300ms delay
     }
   });
 
@@ -98,7 +100,7 @@ function getCell(x, y) {
   return cells[y * gridWidth + x];
 }
 
-// Get all connected fruits (≥3)
+// Get all connected fruits (4-way)
 function getConnectedGroup(x, y, fruit, visited = new Set()) {
   const key = `${x},${y}`;
   if (visited.has(key)) return visited;
