@@ -3,13 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>100x100 Fruit Emoji Grid</title>
+  <title>Fruit Bomb Grid</title>
   <style>
     body {
-      font-size: 12px; /* smaller to fit more emojis */
+      display: grid;
+      grid-template-columns: repeat(100, 1ch);
+      font-size: 12px;
       line-height: 1;
-      white-space: pre; /* preserve line breaks */
-      font-family: monospace; /* keeps grid aligned */
+      justify-content: center;
+      font-family: monospace;
+    }
+    .cell {
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
     }
   </style>
 </head>
@@ -17,17 +24,16 @@
   <script>
     const fruits = ['🍎','🍌','🍇','🍉','🍓','🍒','🍑','🥭','🍍','🥝'];
     const gridSize = 100;
-    let grid = '';
 
-    for (let y = 0; y < gridSize; y++) {
-      let row = '';
-      for (let x = 0; x < gridSize; x++) {
-        row += fruits[Math.floor(Math.random() * fruits.length)];
-      }
-      grid += row + '\n'; // add line break after each row
+    for (let i = 0; i < gridSize * gridSize; i++) {
+      const span = document.createElement('span');
+      span.className = 'cell';
+      span.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+      span.addEventListener('click', () => {
+        span.textContent = '💣';
+      });
+      document.body.appendChild(span);
     }
-
-    document.body.textContent = grid;
   </script>
 </body>
 </html>
