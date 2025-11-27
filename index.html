@@ -1,114 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Match-3 Fruit Grid with Gravity</title>
-  <style>
-    body {
-      display: grid;
-      grid-template-columns: repeat(20, 50px);
-      grid-auto-rows: 50px;
-      gap: 2px;
-      justify-content: center;
-      font-family: monospace;
-      padding: 10px;
-      background: #f0f0f0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match-3 Animated Grid with Delay</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: #f0f0f0;
+    font-family: monospace;
+  }
 
-    .cell {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 36px;
-      cursor: pointer;
-      user-select: none;
-      background: #fff;
-      border-radius: 6px;
-      transition: transform 0.1s;
-    }
+  #grid {
+    position: relative;
+    width: 1000px; /* 20 cols × 50px */
+    height: 1000px; /* 20 rows × 50px */
+    border: 2px solid #ccc;
+    background: #fff;
+  }
 
-    .cell:hover {
-      transform: scale(1.1);
-    }
-  </style>
+  .cell {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 36px;
+    cursor: pointer;
+    transition: top 0.3s ease;
+    user-select: none;
+  }
+</style>
 </head>
 <body>
-  <script>
-    const fruits = ['🍎','🍌','🍇','🍉','🍓','🍒','🍑','🥭','🍍','🥝'];
-    const gridWidth = 20;
-    const gridHeight = 20;
-    const cells = [];
 
-    // Create grid
-    for (let y = 0; y < gridHeight; y++) {
-      for (let x = 0; x < gridWidth; x++) {
-        const span = document.createElement('span');
-        span.className = 'cell';
-        span.dataset.x = x;
-        span.dataset.y = y;
-        span.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-        document.body.appendChild(span);
-        cells.push(span);
+<div id="grid"></div>
+
+<script>
+const fruits = ['🍎','🍌','🍇','🍉','🍓','🍒','🍑','🥭','🍍','🥝'];
+const gridWidth = 20;
+const gridHeight = 20;
+const grid = document.getElementById('grid');
+const cells = [];
+
+// Create grid
+for (let y = 0; y < gridHeight; y++) {
+  for (let x = 0; x < gridWidth; x++) {
+    const cell = createCell(x, y, randomFruit());
+    cells.push(cell);
+    grid.appendChild(cell);
+  }
+}
+
+// Helper to create a fruit cell
+function createCell(x, y, fruit) {
+  const span = document.createElement('span');
+  span.className = 'cell';
+  span.dataset.x = x;
+  span.dataset.y = y;
+  span.dataset.fruit = fruit;
+  span.textContent = fruit;
+  span.style.left = `${x * 50}px`;
+  span.style.top = `${y * 50}px`;
+
+  span.addEventListener('click', () => {
+    const f = span.dataset.fruit;
+    if (!f) return;
+
+    const group = getConnectedGroup(x, y, f);
+    if (group.size >= 3) {
+      // Delete the group visually
+      for (let key of group) {
+        const [gx, gy] = key.split(',').map(Number);
+        const c = getCell(gx, gy);
+        c.dataset.fruit = '';
+        c.textContent = '';
       }
+      // Delay before gravity
+      setTimeout(applyGravity, 300);
     }
+  });
 
-    // Helper to get cell at coordinates
-    function getCell(x, y) {
-      if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return null;
-      return cells[y * gridWidth + x];
-    }
+  return span;
+}
 
-    // Recursive delete function
-    function deleteConnected(x, y, fruit, visited = new Set()) {
-      const key = `${x},${y}`;
-      if (visited.has(key)) return;
+// Random fruit
+function randomFruit() {
+  return fruits[Math.floor(Math.random() * fruits.length)];
+}
+
+// Get cell at (x,y)
+function getCell(x, y) {
+  if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return null;
+  return cells[y * gridWidth + x];
+}
+
+// Get all connected fruits (≥3)
+function getConnectedGroup(x, y, fruit, visited = new Set()) {
+  const key = `${x},${y}`;
+  if (visited.has(key)) return visited;
+  const cell = getCell(x, y);
+  if (!cell || cell.dataset.fruit !== fruit) return visited;
+
+  visited.add(key);
+  getConnectedGroup(x+1, y, fruit, visited);
+  getConnectedGroup(x-1, y, fruit, visited);
+  getConnectedGroup(x, y+1, fruit, visited);
+  getConnectedGroup(x, y-1, fruit, visited);
+  return visited;
+}
+
+// Gravity with smooth animation
+function applyGravity() {
+  for (let x = 0; x < gridWidth; x++) {
+    let emptySlots = 0;
+    for (let y = gridHeight - 1; y >= 0; y--) {
       const cell = getCell(x, y);
-      if (!cell || cell.textContent !== fruit) return;
+      if (!cell.dataset.fruit) {
+        emptySlots++;
+      } else if (emptySlots > 0) {
+        const targetCell = getCell(x, y + emptySlots);
+        targetCell.dataset.fruit = cell.dataset.fruit;
+        targetCell.textContent = cell.dataset.fruit;
+        targetCell.style.top = `${(y + emptySlots) * 50}px`;
 
-      cell.textContent = ''; // delete fruit
-      visited.add(key);
-
-      deleteConnected(x+1, y, fruit, visited);
-      deleteConnected(x-1, y, fruit, visited);
-      deleteConnected(x, y+1, fruit, visited);
-      deleteConnected(x, y-1, fruit, visited);
-    }
-
-    // Apply gravity: fruits fall down to fill empty cells
-    function applyGravity() {
-      for (let x = 0; x < gridWidth; x++) {
-        let emptySlots = 0;
-        for (let y = gridHeight - 1; y >= 0; y--) {
-          const cell = getCell(x, y);
-          if (!cell.textContent) {
-            emptySlots++;
-          } else if (emptySlots > 0) {
-            const targetCell = getCell(x, y + emptySlots);
-            targetCell.textContent = cell.textContent;
-            cell.textContent = '';
-          }
-        }
-        // Fill top empty cells with new random fruits
-        for (let y = 0; y < emptySlots; y++) {
-          const cell = getCell(x, y);
-          cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-        }
+        cell.dataset.fruit = '';
+        cell.textContent = '';
       }
     }
 
-    // Click handler
-    cells.forEach(cell => {
-      cell.addEventListener('click', () => {
-        const x = parseInt(cell.dataset.x);
-        const y = parseInt(cell.dataset.y);
-        const fruit = cell.textContent;
-        if (fruit) {
-          deleteConnected(x, y, fruit);
-          applyGravity();
-        }
+    // Fill new fruits at the top
+    for (let y = 0; y < emptySlots; y++) {
+      const cell = getCell(x, y);
+      const newFruit = randomFruit();
+      cell.dataset.fruit = newFruit;
+      cell.textContent = newFruit;
+
+      // Start above grid
+      cell.style.top = `${(y - emptySlots) * 50}px`;
+      requestAnimationFrame(() => {
+        cell.style.top = `${y * 50}px`;
       });
-    });
-  </script>
+    }
+  }
+}
+</script>
+
 </body>
 </html>
